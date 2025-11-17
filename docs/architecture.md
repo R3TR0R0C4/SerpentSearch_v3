@@ -1,7 +1,10 @@
 ## Project Architecture
 The project is organized into several files for separation of concerns:
 
-* config.py: Holds configuration variables like database credentials (DB_HOST, DB_USER, DB_PASS, DB_NAME), table/column names (e.g., DB_CRAWLER_TABLE = 'urls', DB_URL_COLUMN = 'url'), file paths (OUTPUT_PATH = 'crawled_urls.txt'), and defaults (MAX_DEPTH_DEFAULT = 2). This makes it easy to change settings without modifying code.
+* config.py: Holds configuration variables like database credentials
+    * (DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    * table/column names (e.g., DB_CRAWLER_TABLE = 'urls', DB_URL_COLUMN = 'url')
+    * file paths (OUTPUT_PATH = 'crawled_urls.txt'), and defaults (MAX_DEPTH_DEFAULT = 2)
 
 * models.py: Handles all database operations using pymysql. Key functions:
     * get_connection(): Establishes a MariaDB connection.
