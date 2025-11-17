@@ -1,71 +1,56 @@
 ## Project Architecture
-The project is organized into several files for separation of concerns:
 
-* config.py: Holds configuration variables like database credentials
-    * (DB_HOST, DB_USER, DB_PASS, DB_NAME)
-    * table/column names (e.g., DB_CRAWLER_TABLE = 'urls', DB_URL_COLUMN = 'url')
-    * file paths (OUTPUT_PATH = 'crawled_urls.txt'), and defaults (MAX_DEPTH_DEFAULT = 2)
+We split the project into several files to keep things organized. Each file has a specific job:
 
-* models.py: Handles all database operations using pymysql. Key functions:
-    * get_connection(): Establishes a MariaDB connection.
-    * create_database() and create_table(): Set up the DB and table (run once for initialization).
-    * insert_pending(url, parent, depth): Adds a URL as 'pending' (uses INSERT IGNORE for uniqueness).
-    * get_next_pending(): Fetches the next 'pending' URL (ordered by depth ASC, then ID ASC).
-    * mark_crawled(url): Updates status to 'crawled' and sets crawled_at timestamp.
-    * get_pending_count() and get_crawled_count(): Count rows by status for stats.
-    * clear_table(): Truncates the table for new crawls.
+  * **`config.py`**: This is where we keep all the settings. Think database logins (`DB_HOST`, `DB_USER`, etc.), names for our tables and columns, and default values like the `MAX_DEPTH_DEFAULT`.
 
-    The table schema (in create_table()):
-    * id: AUTO_INCREMENT PRIMARY KEY
-    * url: VARCHAR(255) UNIQUE NOT NULL
-    * parent_url: VARCHAR(255) DEFAULT NULL
-    * depth: INT
-    * status: ENUM('pending', 'crawled') DEFAULT 'pending'
-    * insert_time: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    * crawled_at: TIMESTAMP DEFAULT NULL
+  * **`models.py`**: This file talks to the MariaDB database (using `pymysql`). It's responsible for:
 
-* crawler.py: Core crawling logic.
-    * fetch_page(url): GETs the page content with requests (adds User-Agent header for better compatibility).
-    * extract_links(content, base_url): Parses HTML with BeautifulSoup to get absolute links.
-    * store_data(url, parent): Appends to TXT file (backup; DB storage is handled in models.py).
-    * crawl(start_url, max_depth, output_path): Main loop using DB as queue:
-        1. Insert start_url as pending (depth 0, no parent).
-        2. While pending items exist:
-            * Get next pending (url, parent, depth).
-            * If depth > max_depth or fetch fails, skip.
-            * Fetch content, mark as crawled, store to file.
-            * If depth < max_depth, extract links and insert as pending children.
+      * Connecting to the DB (`get_connection`).
+      * Setting up the database and table the first time (`create_database`, `create_table`).
+      * Adding new URLs to the queue (`insert_pending`). We use `INSERT IGNORE` so we don't add duplicates.
+      * Grabbing the next URL to crawl (`get_next_pending`). It prioritizes by depth first, then by the oldest entry.
+      * Updating a URL's status to 'crawled' (`mark_crawled`).
+      * Getting stats for the web UI (`get_pending_count`, `get_crawled_count`).
+      * Wiping the table for a fresh start (`clear_table`).
 
+    The database table itself is pretty straightforward: `id`, `url` (which must be unique), `parent_url`, `depth`, `status` ('pending' or 'crawled'), and timestamps.
 
-* app.py: Flask web application.
-  * Routes:
-        * /: Temporarily redirects /admin, when search capability is added it will be the search page.
-        * /admin (GET): Renders admin.html with form for start_url and max_depth.
-        * /admin/crawl (POST): Clears table, starts crawl in background thread, shows message.
-        * /admin/stats (GET): Returns JSON {'pending': count, 'crawled': count}.
+  * **`crawler.py`**: This is the heart of the crawler.
 
-    * Uses threading for non-blocking crawls.
+      * `fetch_page(url)`: Grabs the HTML from a URL. It sends a `User-Agent` header to look more like a real browser.
+      * `extract_links(content, base_url)`: Uses BeautifulSoup to find all the links on the page and make sure they're absolute (e.g., `/about` becomes `http://example.com/about`).
+      * `store_data(url, parent)`: A simple backup that just appends the crawled URL to a text file.
+      * `crawl(start_url, max_depth)`: This is the main function. It uses the database as its to-do list:
+        1.  Adds the `start_url` to the queue.
+        2.  Keeps looping as long as there are 'pending' URLs.
+        3.  It grabs the next URL, fetches it, marks it 'crawled', and saves it to the text file.
+        4.  If the crawler isn't too deep (the depth of the link isn't bigger than the configured depth), it finds all the links on that page and adds them to the queue as 'pending'.
 
-* run.py: CLI entry point (optional, for non-web use).
-    * Parses args: python run.py <start_url> [max_depth].
-    * Calls crawl() directly.
+  * **`app.py`**: This is the Flask web app that provides a simple UI.
 
-* templates/admin.html: HTML form for inputs, displays message, and stats (queue size, crawled items). Notes "Statistics refresh every 5 seconds."
-* static/js/app.js: JavaScript for polling /admin/stats every 5s via fetch(), updating DOM elements (#queue-size, #crawled-items).
+      * `/`: Just forwards you to the admin page for now.
+      * `/admin` (GET): Shows the admin page with the form to start a crawl.
+      * `/admin/crawl` (POST): This is what the form submits to. It clears the database and then starts the crawling process in a background thread. This is important so the web page doesn't freeze while the crawl is running.
+      * `/admin/stats` (GET): A JSON endpoint for the frontend to get live stats (how many URLs are pending vs. crawled).
 
-## Setup Process
+  * **`run.py`**: A simple script if you just want to run the crawler from your terminal without the web UI. (may be removed in the future)
 
-1. Install Dependencies:
-    * Python libraries: pip install requests beautifulsoup4 pymysql flask.
-    * MariaDB: Install server, create root user if needed.
+  * **`templates/admin.html`**: The HTML for the `/admin` page. It has the form and the stats.
 
-2. Configure config.py:
-    * Update DB credentials and names.
-    * Ensure MariaDB is running.
+  * **`static/js/app.js`**: A bit of JavaScript that calls the `/admin/stats` endpoint every 5 seconds and updates the "Queue Size" and "Items Crawled" numbers on the page.
 
-Folder Structure:
+-----
 
-```textproject/
+## Getting Started
+
+1.  **Dependencies**: You'll need the Python libraries (`pip install requests beautifulsoup4 pymysql flask`) and a MariaDB server.
+2.  **Edit `config.py`**: Open `config.py` and put in your MariaDB username, password, and database name. Make sure your MariaDB server is running\!
+
+### Folder Structure
+
+```text
+project/
 ├── app.py
 ├── config.py
 ├── crawler.py
@@ -78,46 +63,34 @@ Folder Structure:
         └── app.js
 ```
 
-## Crawling Process
-The crawler uses a database-backed queue for persistence and state management:
+-----
 
-1. Start Crawl:
-    * Via web: Submit form on /admin → POST to /admin/crawl → Clear table → Thread starts crawl().
-    * Via CLI: python run.py <url> [depth] → Calls crawl().
+## How the Crawl Works
 
-2. Initialization:
-    * Insert start_url as 'pending' (depth 0, parent None).
+The main idea is using the database as a persistent to-do list (queue). This helps manage the state and means we don't lose progress if the script stops.
 
-3. Main Loop (in crawl()):
-    * While pending items:
-        * Fetch next pending (lowest depth, oldest).
-        * Skip if depth > max_depth or fetch fails.
-        * Fetch page content.
-        * Mark as 'crawled' (update status and timestamp).
-        * Store to TXT (url | parent).
-        * If depth < max_depth: Extract links, insert unique children as 'pending'.
+1.  **How to start**: You can either hit the "Start Crawl" button on the web UI (`/admin`) or run `python3 run.py <url> <depth>` from the command line.
 
-4. Status Meanings:
-    * Pending: URL discovered but not yet fetched/processed (to-do queue).
-    * Crawled: URL successfully fetched, links extracted (if applicable), marked done.
-    * No content storage or indexing—just URL metadata for now.
+2.  **The Loop**:
 
-5. Error Handling:
-    * Fetch errors: Skip, leave pending (could add retries).
-    * DB errors: Printed to console.
+      * First, the `start_url` is added to the database as 'pending' at depth 0.
+      * The crawler keeps grabbing the next 'pending' URL (it picks the one with the lowest depth first).
+      * It **skips** the URL if it's deeper than the `max_depth` or if the page fails to load.
+      * Otherwise, it fetches the page, marks the URL as 'crawled' in the DB, and saves the URL to the backup text file.
+      * If it's not at the max depth, it scans the page for new links and adds them to the DB as 'pending'.
 
+3.  **Status Meanings**:
 
-## Monitoring Process (Web App)
+      * **Pending**: It's in the queue to be crawled.
+      * **Crawled**: It's done.
 
-1. Start a Crawl: Form submission triggers background thread—no page block.
-2. Real-Time Stats:
-    * JS polls /admin/stats every 5s.
-    * Endpoint queries DB counts (pending = queue size, crawled = completed).
-    * Updates displayed on page.
-3. User Feedback: Message after submit (e.g., "Crawl started... Monitor statistics below.").
+4.  **Error Handling**: Right now, if a page fails to fetch, it's just skipped and left as 'pending'. Database errors will just print to the console.
 
-## How to Run
+-----
 
-* Web Mode: python app.py → Visit http://127.0.0.1:5000/admin.
-* CLI Mode: python run.py https://example.com 2. (very basic usage)
-* Test with small depth to avoid long runs or anti-scraping blocks (e.g., Reddit may throttle).
+## How to Run It
+
+  * **Web App**: Run `python3 app.py` and open `http://127.0.0.1:5000/admin` in your browser.
+  * **Command Line**: Run `python3 run.py https://example.com 2`.
+
+**A quick tip**: Start with a small depth (like 1 or 2). If you try to crawl a huge site, you might get throttled or blocked.
