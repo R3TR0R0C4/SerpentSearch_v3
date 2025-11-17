@@ -1,6 +1,6 @@
 from crawler import crawl
 import models
-import config
+
 
 import sys
 

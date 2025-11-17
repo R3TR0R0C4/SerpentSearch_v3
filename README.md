@@ -45,51 +45,9 @@ Edit `config.py` to customize:
 - **DB_CRAWLER_TABLE**: Table name for storing URLs (default: `crawl_queue`)
 - **MAX_DEPTH_DEFAULT**: Maximum crawl depth (default: `2`)
 
-## Usage
+## Architecture design
 
-Run the crawler from the command line:
-
-```bash
-python crawler.py
-```
-
-This will start crawling from `https://www.reddit.com/` with a maximum depth of 2.
-
-To customize the start URL and depth, modify the last line in `crawler.py`:
-
-```python
-crawl("https://example.com/", max_depth)
-```
-
-## Database Schema
-
-The crawler stores data in the `crawl_queue` table:
-
-```sql
-CREATE TABLE IF NOT EXISTS serpentsearch_v3.crawl_queue (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    url VARCHAR(255) NOT NULL,
-    crawled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## How It Works
-
-1. **Fetch Page**: Downloads HTML content from a URL
-2. **Extract Links**: Parses HTML and extracts all hyperlinks
-3. **Store Data**: Saves the URL to the database
-4. **Queue Processing**: Adds newly discovered links to a processing queue
-5. **Depth Control**: Respects the maximum depth limit to prevent infinite crawling
-
-## Project Structure
-
-```
-.
-├── crawler.py         # Main crawler implementation
-├── config.py          # Configuration settings
-├── creates.sql        # Database schema
-└── README.md          # This file
-```
+[Architecture](./docs/architecture.md)
 
 ## Notes
 

@@ -1,3 +1,5 @@
+# models.py - Updated with new functions
+
 import pymysql
 import config  # Import your config for DB details
 
@@ -40,32 +42,111 @@ def create_table():
         try:
             cursor = conn.cursor()
             cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {config.DB_CRAWLER_TABLE} (
+                CREATE TABLE IF NOT EXISTS {config.DB_TABLE} (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    {config.DB_URL_COLUMN} VARCHAR(255) NOT NULL,
+                    {config.DB_URL_COLUMN} VARCHAR(255) UNIQUE NOT NULL,
                     {config.DB_PARENT_COLUMN} VARCHAR(255) DEFAULT NULL,
-                    crawled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    depth INT,
+                    status ENUM('pending', 'crawled') DEFAULT 'pending',
+                    insert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    crawled_at TIMESTAMP DEFAULT NULL
                 )
             """)
             conn.commit()
             cursor.close()
             conn.close()
-            print(f"Table '{config.DB_CRAWLER_TABLE}' created or already exists.")
+            print(f"Table '{config.DB_TABLE}' created or already exists.")
         except Exception as e:
             print(f"Error creating table: {e}")
             conn.close()
 
-def insert_url(url, parent):
-    """Insert a URL and its parent into the table."""
+def insert_pending(url, parent, depth):
+    """Insert a pending URL if not already exists (due to UNIQUE)."""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"INSERT INTO {config.DB_CRAWLER_TABLE} (url, parent_url) VALUES (%s, %s)", (url, parent))
+            cursor.execute(f"INSERT IGNORE INTO {config.DB_TABLE} ({config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, status) VALUES (%s, %s, %s, 'pending')", (url, parent, depth))
             conn.commit()
             cursor.close()
             conn.close()
-            print(f"Stored {url} (parent: {parent}) in MariaDB")
         except Exception as e:
-            print(f"Error storing {url} in MariaDB: {e}")
+            print(f"Error inserting pending {url}: {e}")
+            conn.close()
+
+def get_next_pending():
+    """Get the next pending URL with the smallest depth and oldest insert."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT {config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth FROM {config.DB_TABLE} WHERE status='pending' ORDER BY depth ASC, id ASC LIMIT 1")
+            row = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return row
+        except Exception as e:
+            print(f"Error getting next pending: {e}")
+            conn.close()
+    return None
+
+def mark_crawled(url):
+    """Mark a URL as crawled and set crawled_at."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"UPDATE {config.DB_TABLE} SET status='crawled', crawled_at=NOW() WHERE {config.DB_URL_COLUMN}=%s", (url,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"Error marking {url} as crawled: {e}")
+            conn.close()
+
+def get_pending_count():
+    """Get count of pending items (queue size)."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_TABLE} WHERE status='pending'")
+            count = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            return count
+        except Exception as e:
+            print(f"Error getting pending count: {e}")
+            conn.close()
+    return 0
+
+def get_crawled_count():
+    """Get count of crawled items."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_TABLE} WHERE status='crawled'")
+            count = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            return count
+        except Exception as e:
+            print(f"Error getting crawled count: {e}")
+            conn.close()
+    return 0
+
+def clear_table():
+    """Clear the table for a new crawl."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"TRUNCATE TABLE {config.DB_TABLE}")
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print(f"Table '{config.DB_TABLE}' cleared.")
+        except Exception as e:
+            print(f"Error clearing table: {e}")
             conn.close()
