@@ -1,13 +1,14 @@
-# Database configuration (for MariaDB)
+# Database configuration
 DB_HOST = 'localhost'
 DB_USER = 'serpentsearch'
 DB_PASS = 'serpentsearch'
 DB_NAME = 'serpentsearch_v3'
-DB_TABLE = 'crawl_queue'
+DB_CRAWLER_QUEUE_TABLE = 'crawl_queue'
 
-# Database column table names
-DB_URL_COLUMN = 'url'  # Column name for the URL
-DB_PARENT_COLUMN = 'parent_url'  # Column name for the parent URL
+# Database column table
+# DB_CRAWLER_QUEUE_TABLE columns
+DB_URL_COLUMN = 'url'
+DB_PARENT_COLUMN = 'parent_url'
 
 # Other crawl settings
 MAX_DEPTH_DEFAULT = 2  # Crawler depth

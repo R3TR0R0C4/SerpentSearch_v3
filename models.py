@@ -1,7 +1,6 @@
-# models.py - Updated with new functions
-
 import pymysql
-import config  # Import your config for DB details
+
+import config
 
 def get_connection():
     """Get a database connection using config values."""
@@ -42,35 +41,38 @@ def create_table():
         try:
             cursor = conn.cursor()
             cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {config.DB_TABLE} (
+                CREATE TABLE IF NOT EXISTS {config.DB_CRAWLER_QUEUE_TABLE} (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     {config.DB_URL_COLUMN} VARCHAR(255) UNIQUE NOT NULL,
                     {config.DB_PARENT_COLUMN} VARCHAR(255) DEFAULT NULL,
                     depth INT,
-                    status ENUM('pending', 'crawled') DEFAULT 'pending',
+                    max_depth INT DEFAULT 0,
+                    status ENUM('pending', 'crawled', 'failed') DEFAULT 'pending',
                     insert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    crawled_at TIMESTAMP DEFAULT NULL
+                    crawled_at TIMESTAMP DEFAULT NULL,
+                    failed_at TIMESTAMP DEFAULT NULL
                 )
             """)
             conn.commit()
             cursor.close()
             conn.close()
-            print(f"Table '{config.DB_TABLE}' created or already exists.")
+            print(f"Table '{config.DB_CRAWLER_QUEUE_TABLE}' created or already exists.")
         except Exception as e:
             print(f"Error creating table: {e}")
             conn.close()
 
-def insert_pending(url, parent, depth):
+def insert_pending(url, parent, depth, max_depth):
     """Insert a pending URL if not already exists (due to UNIQUE)."""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"INSERT IGNORE INTO {config.DB_TABLE} ({config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, status) VALUES (%s, %s, %s, 'pending')", (url, parent, depth))
+            cursor.execute(f"INSERT IGNORE INTO {config.DB_CRAWLER_QUEUE_TABLE} ({config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, max_depth, status) VALUES (%s, %s, %s, %s, 'pending')", (url, parent, depth, max_depth))
             conn.commit()
             cursor.close()
             conn.close()
         except Exception as e:
+            # The exception here will likely be 'unknown column max_depth' until step 2 is done
             print(f"Error inserting pending {url}: {e}")
             conn.close()
 
@@ -80,11 +82,11 @@ def get_next_pending():
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT {config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth FROM {config.DB_TABLE} WHERE status='pending' ORDER BY depth ASC, id ASC LIMIT 1")
+            cursor.execute(f"SELECT {config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, max_depth FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='pending' ORDER BY depth ASC, id ASC LIMIT 1")
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            return row
+            return row 
         except Exception as e:
             print(f"Error getting next pending: {e}")
             conn.close()
@@ -96,12 +98,26 @@ def mark_crawled(url):
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"UPDATE {config.DB_TABLE} SET status='crawled', crawled_at=NOW() WHERE {config.DB_URL_COLUMN}=%s", (url,))
+            cursor.execute(f"UPDATE {config.DB_CRAWLER_QUEUE_TABLE} SET status='crawled', crawled_at=NOW() WHERE {config.DB_URL_COLUMN}=%s", (url,))
             conn.commit()
             cursor.close()
             conn.close()
         except Exception as e:
             print(f"Error marking {url} as crawled: {e}")
+            conn.close()
+
+def mark_failed(url):
+    """Mark a URL as failed and set failed_at."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"UPDATE {config.DB_CRAWLER_QUEUE_TABLE} SET status='failed', failed_at=NOW() WHERE {config.DB_URL_COLUMN}=%s", (url,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except Exception as e:
+            print(f"Error marking {url} as failed: {e}")
             conn.close()
 
 def get_pending_count():
@@ -110,7 +126,7 @@ def get_pending_count():
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_TABLE} WHERE status='pending'")
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='pending'")
             count = cursor.fetchone()[0]
             cursor.close()
             conn.close()
@@ -126,7 +142,7 @@ def get_crawled_count():
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_TABLE} WHERE status='crawled'")
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='crawled'")
             count = cursor.fetchone()[0]
             cursor.close()
             conn.close()
@@ -136,17 +152,33 @@ def get_crawled_count():
             conn.close()
     return 0
 
+def get_failed_count():
+    """Get count of failed items."""
+    conn = get_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='failed'")
+            count = cursor.fetchone()[0]
+            cursor.close()
+            conn.close()
+            return count
+        except Exception as e:
+            print(f"Error getting failed count: {e}")
+            conn.close()
+    return 0
+
 def clear_table():
     """Clear the table for a new crawl."""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"TRUNCATE TABLE {config.DB_TABLE}")
+            cursor.execute(f"TRUNCATE TABLE {config.DB_CRAWLER_QUEUE_TABLE}")
             conn.commit()
             cursor.close()
             conn.close()
-            print(f"Table '{config.DB_TABLE}' cleared.")
+            print(f"Table '{config.DB_CRAWLER_QUEUE_TABLE}' cleared.")
         except Exception as e:
             print(f"Error clearing table: {e}")
             conn.close()

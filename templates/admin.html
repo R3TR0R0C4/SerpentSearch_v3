@@ -1,25 +1,46 @@
 <!doctype html>
 <html>
+
 <head>
     <title>Crawler Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
+
 <body>
     <h1>Web Crawler Admin</h1>
-    <form method="POST" action="{{ url_for('start_crawl') }}">
+
+    <form method="POST" action="{{ url_for('add_to_queue') }}">
         <label for="start_url">Start URL:</label>
         <input type="text" id="start_url" name="start_url" required>
-        <br>
-        <label for="max_depth">Max Depth:</label>
-        <input type="number" id="max_depth" name="max_depth" value="{{ default_depth }}" required>
-        <br>
-        <input type="submit" value="Start Crawl">
+
+        <label for="max_depth">Max depth:</label>
+        <input type="number" id="max_depth" name="max_depth" value="2" min="1" required>
+
+        <input type="submit" value="Add to Queue">
     </form>
+
     {% if message %}
-        <p>{{ message }}</p>
+    <p class="message">{{ message }}</p>
     {% endif %}
-    <p>Statistics refresh every 5 seconds.</p>
-    <div>Current queue size (pending items): <span id="queue-size">Loading...</span></div>
-    <div>Crawled items: <span id="crawled-items">Loading...</span></div>
+
+    <div class="button-controls">
+        <button id="pause-btn" onclick="pauseCrawl()">Pause Crawl</button>
+        <button id="resume-btn" onclick="resumeCrawl()">Resume Crawl</button>
+    </div>
+
+    <div class="stats-box">
+        <p>Statistics refresh every 5 seconds.</p>
+
+        <div id="crawler-status-container">
+            Crawler Status: <span id="crawler-status">Loading...</span>
+            <span id="pause-status">...</span>
+        </div>
+
+        <div>Current queue size (pending items): <span id="queue-size">Loading...</span></div>
+        <div>Crawled items: <span id="crawled-items">Loading...</span></div>
+        <div>Failed items: <span id="failed-items">Loading...</span></div>
+    </div>
 </body>
+
 </html>

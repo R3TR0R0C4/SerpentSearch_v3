@@ -54,7 +54,7 @@ You can change all the main settings in `config.py`:
   * **DB_USER**: Your database username (default: `serpentsearch`)
   * **DB_PASS**: Your database password (default: `serpentsearch`)
   * **DB_NAME**: The name of the database (default: `serpentsearch_v3`)
-  * **DB_CRAWLER_TABLE**: The table where URLs are stored (default: `crawl_queue`)
+  * **DB_CRAWLER_QUEUE_TABLE**: The table where URLs are stored (default: `crawl_queue`)
   * **MAX_DEPTH_DEFAULT**: The default crawl depth (default: `2`)
 
 -----
