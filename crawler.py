@@ -6,7 +6,6 @@ import time
 from bs4 import BeautifulSoup
 
 import models
-import config
 import control
 
 
