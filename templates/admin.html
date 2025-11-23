@@ -4,7 +4,15 @@
 <head>
     <title>Crawler Admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+
+    <script src="{{ url_for('static', filename='js/npm_charts.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <style>
+        /* CSS from admin.css (Simulated) */
+    </style>
+
 </head>
 
 <body>
@@ -30,7 +38,7 @@
     </div>
 
     <div class="stats-box">
-        <p>Statistics refresh every 5 seconds.</p>
+        <p id="refresh-explain">Statistics refresh every 5 seconds.</p>
 
         <div id="crawler-status-container">
             Crawler Status: <span id="crawler-status">Loading...</span>
@@ -43,9 +51,15 @@
 
         <br>
 
-        <a href="/admin/stats" target="_blank">Raw stats api page</a>
-
     </div>
+
+
+  <div id="chartSection">
+    <div id="chartContainer">
+      <canvas id="crawledChart"></canvas>
+      <canvas id="pendingChart"></canvas>
+    </div>
+  </div>
 
 </body>
 
