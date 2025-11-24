@@ -47,7 +47,7 @@ def create_table():
                     {config.DB_PARENT_COLUMN} VARCHAR(255) DEFAULT NULL,
                     depth INT,
                     max_depth INT DEFAULT 0,
-                    status ENUM('pending', 'crawled', 'failed') DEFAULT 'pending',
+                    status ENUM('pending', 'crawled', 'failed', 'media', 'web-support') DEFAULT 'pending',
                     insert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     crawled_at TIMESTAMP DEFAULT NULL,
                     failed_at TIMESTAMP DEFAULT NULL
@@ -61,20 +61,24 @@ def create_table():
             print(f"Error creating table: {e}")
             conn.close()
 
-def insert_pending(url, parent, depth, max_depth):
+def insert_pending(url, parent, depth, max_depth, status='pending'):
     """Insert a pending URL if not already exists (due to UNIQUE)."""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"INSERT IGNORE INTO {config.DB_CRAWLER_QUEUE_TABLE} ({config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, max_depth, status) VALUES (%s, %s, %s, %s, 'pending')", (url, parent, depth, max_depth))
+            cursor.execute(f"""
+                INSERT IGNORE INTO {config.DB_CRAWLER_QUEUE_TABLE} 
+                ({config.DB_URL_COLUMN}, {config.DB_PARENT_COLUMN}, depth, max_depth, status) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, (url, parent, depth, max_depth, status))
             conn.commit()
             cursor.close()
             conn.close()
         except Exception as e:
-            # The exception here will likely be 'unknown column max_depth' until step 2 is done
             print(f"Error inserting pending {url}: {e}")
-            conn.close()
+            if conn:
+                conn.close()
 
 def get_next_pending():
     """Get the next pending URL with the smallest depth and oldest insert."""

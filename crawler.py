@@ -1,13 +1,38 @@
-import urllib.parse
+import os
 import requests
 import random
 import time
+from urllib.parse import urlparse, urljoin
 
 from bs4 import BeautifulSoup
 
 import models
 import control
 
+def get_url_status(url: str) -> str:
+    """Return 'media', 'web-support', or 'pending' based on file extension."""
+    parsed = urlparse(url)
+    _, ext = os.path.splitext(parsed.path.lower())
+    
+    # Media files (images, video, audio, documents, archives)
+    if ext in {
+        '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.tiff', '.tif',
+        '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.flv', '.wmv',
+        '.mp3', '.wav', '.flac', '.aac',
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.zip', '.rar', '.7z', '.tar', '.gz'
+    }:
+        return 'media'
+
+    # Web support files (scripts, styles, fonts, manifests, etc.)
+    if ext in {
+        '.js', '.mjs', '.css', '.scss', '.sass',
+        '.woff', '.woff2', '.ttf', '.otf', '.eot',
+        '.json', '.xml', '.webmanifest', '.map'
+    }:
+        return 'web-support'
+
+    return 'pending'  # everything else → treat as crawlable page
 
 def fetch_page(url):
     user_agents = [
@@ -53,7 +78,7 @@ def extract_links(content, base_url):
         soup = BeautifulSoup(content, 'html.parser')
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
-            abs_url = urllib.parse.urljoin(base_url, href)
+            abs_url = urljoin(base_url, href)
             if abs_url.startswith('http') or abs_url.startswith('https'):
                 links.append(abs_url)
     except Exception as e:
@@ -77,15 +102,31 @@ def crawl():
         current_url, current_parent, current_depth, max_depth = pending
         
         content = fetch_page(current_url)
+        """if content:
+            print(f"Fetched {len(content)} characters for {current_url}")
+            print(f"Title: {content.split('<title>')[1].split('</title>')[0] if '<title>' in content else 'NO TITLE'}")
+            print(content[:1000])  # see the first 1000 chars
+        else:
+            print(f"fetch_page returned None/empty for {current_url}")"""
         if not content:
             models.mark_failed(current_url)
             continue
         
-
         models.mark_crawled(current_url)
         print(f"Visiting {current_url} at depth {current_depth}")
                 
+        """if current_depth < max_depth:
+            links = extract_links(content, current_url)
+            for link in links:
+                models.insert_pending(link, current_url, current_depth + 1, max_depth)"""
         if current_depth < max_depth:
             links = extract_links(content, current_url)
             for link in links:
-                models.insert_pending(link, current_url, current_depth + 1, max_depth)
+                link_status = get_url_status(link)
+                models.insert_pending(
+                    link, 
+                    current_url, 
+                    current_depth + 1, 
+                    max_depth, 
+                    status=link_status
+                )
