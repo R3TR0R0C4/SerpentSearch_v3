@@ -78,7 +78,7 @@ def pause_crawl():
 def resume_crawl():
     with control.lock:
         control.is_paused = False
-        if not control.is_running and models.get_pending_count() > 0:
+        if not control.is_running and models.get_stats_counter('pending') > 0:
             control.crawl_thread = threading.Thread(target=run_crawl)
             control.crawl_thread.start()
     return jsonify({'status': 'resumed'})
@@ -88,9 +88,11 @@ def resume_crawl():
 def get_stats():
     with control.lock:
         status = {
-            'pending': models.get_pending_count(),
-            'crawled': models.get_crawled_count(),
-            'failed': models.get_failed_count() if hasattr(models, 'get_failed_count') else 0,
+            'pending': models.get_stats_counter('pending'),
+            'crawled': models.get_stats_counter('crawled'),
+            'failed': models.get_stats_counter('failed') if hasattr(models, 'get_failed_count') else 0,
+            'media': models.get_stats_counter('media'),
+            'web-support': models.get_stats_counter('web-support'),
             'is_running': control.is_running,
             'is_paused': control.is_paused
         }

@@ -140,35 +140,20 @@ def get_pending_count():
             conn.close()
     return 0
 
-def get_crawled_count():
-    """Get count of crawled items."""
-    conn = get_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='crawled'")
-            count = cursor.fetchone()[0]
-            cursor.close()
-            conn.close()
-            return count
-        except Exception as e:
-            print(f"Error getting crawled count: {e}")
-            conn.close()
-    return 0
 
-def get_failed_count():
-    """Get count of failed items."""
+def get_stats_counter(column):
+    """Select count(*) from database specified field"""
     conn = get_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='failed'")
+            cursor.execute(f"SELECT COUNT(*) FROM {config.DB_CRAWLER_QUEUE_TABLE} WHERE status='{column}'")
             count = cursor.fetchone()[0]
             cursor.close()
             conn.close()
             return count
         except Exception as e:
-            print(f"Error getting failed count: {e}")
+            print(f"Error getting counter of {config.DB_CRAWLER_QUEUE_TABLE}.{column}: {e}")
             conn.close()
     return 0
 
