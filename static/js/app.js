@@ -6,7 +6,8 @@ function updateStats() {
       document.getElementById("queue-size").innerText = data.pending;
       document.getElementById("crawled-items").innerText = data.crawled;
       document.getElementById("failed-items").innerText = data.failed;
-
+      document.getElementById('media-items').innerText = data.media;
+      
       // Determine and display the main running status
       let statusText;
       if (data.is_running) {

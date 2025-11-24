@@ -48,21 +48,66 @@
         <div>Current queue size (pending items): <span id="queue-size">Loading...</span></div>
         <div>Crawled items: <span id="crawled-items">Loading...</span></div>
         <div>Failed items: <span id="failed-items">Loading...</span></div>
-
+        <div>Media items: <span id="media-items">Loading...</span></div>
         <br>
 
     </div>
 
 
-  <div id="chartSection">
-    <div id="chartContainer">
-      <canvas id="crawledChart"></canvas>
-      <canvas id="pendingChart"></canvas>
-
-      <canvas id="crawledRateChart"></canvas>
-      <canvas id="pendingRateChart"></canvas>
+    <div id="chartSection">
+        <div id="chartContainer">
+            <canvas id="crawledChart"></canvas> <!--Total amount of crawled pages-->
+            <canvas id="pendingChart"></canvas> <!--Total amount of pages in the queue waiting to be processed-->
+            <canvas id="crawledRateChart"></canvas> <!--Rate of crawled pages /min-->
+            <canvas id="pendingRateChart"></canvas> <!--Rate of page changes in queue-->
+        </div>
     </div>
-  </div>
+    
+    <label class="dropdown-toggle" for="dropdown-checkbox">
+        ▼ Show Extra Sections
+    </label>
+    <input type="checkbox" id="dropdown-checkbox" hidden>
+
+    <div class="dropdown-content">
+        <div class="stats-box">
+            <div class="chart-info">
+                <p><strong>Crawled pages</strong><br>
+                    <small style="color:#aaaaaa;">Cumulative total of pages successfully downloaded and processed since
+                        the
+                        crawler started or was last reset.</small>
+                </p>
+            </div>
+
+            <!-- After <canvas id="pendingChart"> -->
+            <div class="chart-info">
+                <p><strong>Pending pages</strong><br>
+                    <small style="color:#aaaaaa;">Current size of the queue — pages discovered but not yet crawled. This
+                        is the
+                        backlog.</small>
+                </p>
+            </div>
+
+            <!-- After <canvas id="crawledRateChart"> -->
+            <div class="chart-info">
+                <p><strong>Crawled pages / minute</strong><br>
+                    <small style="color:#aaaaaa;">Real-time crawling speed. Shows how many pages your crawler is
+                        successfully
+                        processing per minute right now (green = healthy and fast).</small>
+                </p>
+            </div>
+
+            <!-- After <canvas id="pendingRateChart"> -->
+            <div class="chart-info">
+                <p><strong>Pending queue change / minute</strong><br>
+                    <small style="color:#aaaaaa;">Rate at which the queue is growing or shrinking.<br>
+                        • Positive (orange line up) = discovering new URLs faster than crawling → queue growing<br>
+                        • Negative (orange line down) = crawler is winning → queue shrinking<br>
+                        • Near zero = steady state (balanced)</small>
+                </p>
+            </div>
+        </div>
+
+    </div>
 
 </body>
 

@@ -1,38 +1,45 @@
+/* General page styling */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background-color: #232326;
-    color: #f4f4f9;
+    background-color: #232326; /* Dark background */
+    color: #f4f4f9; /* Light text */
 }
 
+/* Title styling */
 h1 {
     color: #c3d6ec;
     border-bottom: 2px solid #ddd;
     padding-bottom: 10px;
 }
 
+/* Form layout and appearance */
 form {
     background: #121212;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+
+    /* Input/label arrangement */
     display: flex;
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
 }
 
+/* Input fields */
 input[type="text"],
 input[type="number"] {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    flex-grow: 1;
+    flex-grow: 1; /* Expand inputs to fill space */
 }
 
+/* Submit button & regular buttons */
 input[type="submit"],
 button {
     background-color: #3498db;
@@ -42,28 +49,33 @@ button {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s;
+    transition: background 0.3s; /* Smooth hover animation */
 }
 
+/* Hover effect for interactive buttons */
 input[type="submit"]:hover,
 button:hover {
     background-color: #2980b9;
 }
 
+/* Button group layout */
 .button-controls {
     margin: 20px 0;
     display: flex;
     gap: 10px;
 }
 
+/* Pause button color override */
 #pause-btn {
     background-color: #f39c12;
 }
 
+/* Resume button color override */
 #resume-btn {
     background-color: #27ae60;
 }
 
+/* Reusable stats box wrapper */
 .stats-box {
     background: #121212;
     padding: 20px;
@@ -73,20 +85,23 @@ button:hover {
     line-height: 1.6;
 }
 
+/* Bold text inside stats sections */
 .stats-box div {
     font-weight: 500;
 }
 
+/* Light-grey descriptor text */
 #refresh-explain {
     color: #748182;
 }
 
+/* Highlight numbers dynamically updated by JavaScript */
 span[id] {
     color: #c3d6ec;
     font-weight: bold;
 }
 
-/* Chart Layout */
+/* Chart container block */
 #chartSection {
     background: #121212;
     padding: 20px;
@@ -94,23 +109,70 @@ span[id] {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Grid layout for 4 charts */
 #chartContainer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
 
-#crawledChart {
-    color: green;
-}
-
+/* Individual canvas defaults (override auto sizing) */
 canvas {
     width: 100% !important;
     height: 300px !important;
 }
 
+/* Responsive behavior: collapse into single-column charts */
 @media (max-width: 1000px) {
     #chartContainer {
         grid-template-columns: 1fr;
     }
+}
+
+/* Dropdown toggle (header that reveals hidden content) */
+.dropdown-toggle {
+    background: #121212;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    color: #c3d6ec;
+    border: 1px solid #2e2e2e;
+    transition: background 0.3s;
+    display: block;
+    margin: 20px 0 10px 0;
+}
+
+/* Hidden dropdown container (appears when checkbox is checked) */
+.dropdown-content {
+    display: none;
+    background: #121212;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+/* Checkbox hack: show dropdown when checked */
+#dropdown-checkbox:checked ~ .dropdown-content {
+    display: block;
+}
+
+/* Styling of explanation panels */
+.chart-info {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    border-left: 3px solid #444;
+}
+
+.chart-info strong {
+    color: #e0e0e0;
+    font-size: 16px;
+}
+
+.chart-info small {
+    line-height: 1.4;
 }
