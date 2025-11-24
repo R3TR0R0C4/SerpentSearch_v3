@@ -9,9 +9,6 @@
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-    <style>
-        /* CSS from admin.css (Simulated) */
-    </style>
 
 </head>
 
@@ -62,9 +59,9 @@
             <canvas id="pendingRateChart"></canvas> <!--Rate of page changes in queue-->
         </div>
     </div>
-    
+
     <label class="dropdown-toggle" for="dropdown-checkbox">
-        ▼ Show Extra Sections
+        ▼ What are these charts?
     </label>
     <input type="checkbox" id="dropdown-checkbox" hidden>
 
@@ -73,8 +70,7 @@
             <div class="chart-info">
                 <p><strong>Crawled pages</strong><br>
                     <small style="color:#aaaaaa;">Cumulative total of pages successfully downloaded and processed since
-                        the
-                        crawler started or was last reset.</small>
+                        the crawler started or was last reset.</small>
                 </p>
             </div>
 
@@ -91,18 +87,16 @@
             <div class="chart-info">
                 <p><strong>Crawled pages / minute</strong><br>
                     <small style="color:#aaaaaa;">Real-time crawling speed. Shows how many pages your crawler is
-                        successfully
-                        processing per minute right now (green = healthy and fast).</small>
+                        successfully processing per minute right now (green = healthy and fast).</small>
                 </p>
             </div>
 
             <!-- After <canvas id="pendingRateChart"> -->
             <div class="chart-info">
                 <p><strong>Pending queue change / minute</strong><br>
-                    <small style="color:#aaaaaa;">Rate at which the queue is growing or shrinking.<br>
-                        • Positive (orange line up) = discovering new URLs faster than crawling → queue growing<br>
-                        • Negative (orange line down) = crawler is winning → queue shrinking<br>
-                        • Near zero = steady state (balanced)</small>
+                    <small style="color:#aaaaaa;">Rate at which the queue is growing or shrinking.<br>• Positive (orange
+                        line up) = discovering new URLs faster than crawling → queue growing<br>• Negative (orange line
+                        down) = crawler is winning → queue shrinking<br>• Near zero = steady state (balanced)</small>
                 </p>
             </div>
         </div>
