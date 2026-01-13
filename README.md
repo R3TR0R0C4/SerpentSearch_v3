@@ -1,3 +1,7 @@
+> [!CAUTION]
+> This was a project to practice and fulfill some curiosity of mine, it's not maintained, and probably not meant for anything.
+
+
 # SerpentSearch v3
 
 A simple Python web crawler that finds and saves URLs.
